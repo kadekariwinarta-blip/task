@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lab Maya Panca Indera - SDN 6 Mas</title>
+    <!-- Tailwind CSS untuk Styling Responsif -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* CSS Utama & Reset Layout 16:9 */
+        * {
+            user-select: none;
+            -webkit-user-select: none;
+            box-sizing: border-box;
+            touch-action: manipulation;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #0f172a;
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Fredoka', cursive, sans-serif;
+        }
+
+        /* Container Rasio 16:9 Responsif Tanpa Scrollbar Main Window */
+        #app-viewport {
+            width: 100vw;
+            height: 100vh;
+            max-width: calc(100vh * (16 / 9));
+            max-height: calc(100vw * (9 / 16));
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, #e0f2fe 0%, #f0f9ff 100%);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        /* Custom Scrollbar untuk Tab Konten jika Diperlukan */
+        .custom-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        /* Animasi Kustom */
+        @keyframes pulse-subtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+        }
+        .animate-pulse-subtle {
+            animation: pulse-subtle 2s infinite ease-in-out;
+        }
+
+        @keyframes bounce-gentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .animate-bounce-gentle {
+            animation: bounce-gentle 1.5s infinite ease-in-out;
+        }
+
+        /* Responsive UI Scaling */
+        @media (max-width: 640px) {
+            .tab-btn { padding: 0.35rem 0.5rem; font-size: 0.75rem; }
+            .header-title { font-size: 1rem; }
+            .card-title { font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center bg-slate-900">
+
+    <!-- VIEWPORT UTAMA (16:9 RATIO) -->
+    <div id="app-viewport" class="relative text-slate-800">
+
+        <!-- TOMBOL AUDIO MUTE TOGGLE (Pojok Atas Kanan) -->
+        <button id="sound-toggle-btn" onclick="toggleSound()" class="absolute top-3 right-3 z-50 bg-white/90 hover:bg-white text-slate-700 p-2.5 rounded-full shadow-md border-2 border-slate-200 transition active:scale-95 flex items-center justify-center" title="Matikan/Hidupkan Suara">
+            <span id="sound-icon" class="text-xl">🔊</span>
+        </button>
+
+        <!-- ==================== 1. SPLASH SCREEN ==================== -->
+        <div id="splash-screen" class="absolute inset-0 z-40 bg-gradient-to-br from-cyan-500 via-sky-500 to-blue-600 flex flex-direction-col flex-col items-center justify-center p-6 text-white text-center">
+            <div class="bg-white/10 backdrop-blur-md p-6 sm:p-8 rounded-3xl border border-white/20 shadow-2xl max-w-xl w-full flex flex-col items-center">
+                <!-- Icon Logo Panca Indera -->
+                <div class="flex justify-center space-x-2 text-4xl sm:text-5xl mb-4 bg-white/20 p-4 rounded-2xl animate-bounce-gentle">
+                    <span>👁️</span><span>👂</span><span>👃</span><span>👅</span><span>✋</span>
+                </div>
+                
+                <h1 class="text-2xl sm:text-4xl font-extrabold tracking-wide mb-1 drop-shadow-md">LAB MAYA PANCA INDERA</h1>
+                <p class="text-yellow-300 font-bold text-base sm:text-lg mb-6 tracking-wide drop-shadow">SD NEGERI 6 MAS — FASE B KELAS 3 SD</p>
+                
+                <!-- Loading Indicator Bar -->
+                <div id="loading-container" class="w-full bg-blue-900/40 rounded-full h-5 p-1 mb-6 border border-white/30 relative">
+                    <div id="loading-bar" class="bg-gradient-to-r from-yellow-400 to-amber-300 h-full rounded-full transition-all duration-300 w-0"></div>
+                    <span id="loading-text" class="absolute inset-0 flex items-center justify-center text-xs font-bold text-white drop-shadow">Memuat Media (0%)...</span>
+                </div>
+
+                <!-- Tombol Mulai -->
+                <button id="start-btn" onclick="startApp()" disabled class="w-full py-3.5 bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-300 hover:to-green-400 text-slate-900 font-black text-lg sm:text-xl rounded-2xl shadow-lg transform transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed animate-pulse-subtle">
+                    🚀 MULAI BELAJAR
+                </button>
+            </div>
+        </div>
+
+        <!-- ==================== HEADER APP ==================== -->
+        <header class="bg-white/90 backdrop-blur-md border-b border-slate-200 px-4 py-2.5 flex items-center justify-between shrink-0 shadow-sm z-10">
+            <div class="flex items-center space-x-3">
+                <div class="bg-gradient-to-tr from-sky-500 to-blue-600 text-white p-2 rounded-xl text-lg shadow-sm">
+                    🧪
+                </div>
+                <div>
+                    <h2 class="header-title font-extrabold text-slate-800 text-base sm:text-lg leading-tight">Lab Maya Panca Indera</h2>
+                    <p class="text-xs text-sky-600 font-bold hidden sm:block">SD Negeri 6 Mas • IPAS Kelas 3</p>
+                </div>
+            </div>
+
+            <!-- TAB NAVIGASI UTAMA -->
+            <nav class="flex space-x-1 sm:space-x-2 mr-10">
+                <button onclick="switchTab('teori')" id="tab-teori" class="tab-btn active px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center space-x-1 bg-sky-500 text-white shadow-sm">
+                    <span>📖</span><span class="hidden md:inline">Teori</span>
+                </button>
+                <button onclick="switchTab('prosedur')" id="tab-prosedur" class="tab-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center space-x-1 bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    <span>📋</span><span class="hidden md:inline">Prosedur</span>
+                </button>
+                <button onclick="switchTab('simulasi')" id="tab-simulasi" class="tab-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center space-x-1 bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    <span>🎮</span><span class="hidden md:inline">Simulasi</span>
+                </button>
+                <button onclick="switchTab('lkpd')" id="tab-lkpd" class="tab-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center space-x-1 bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    <span>📝</span><span class="hidden md:inline">LKPD</span>
+                </button>
+                <button onclick="switchTab('pengembang')" id="tab-pengembang" class="tab-btn px-3 py-1.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center space-x-1 bg-slate-100 text-slate-600 hover:bg-slate-200">
+                    <span>👨‍🏫</span><span class="hidden md:inline">Pengembang</span>
+                </button>
+            </nav>
+        </header>
+
+        <!-- ==================== KONTEN UTAMA (PANEL TAB) ==================== -->
+        <main class="flex-1 relative overflow-hidden bg-slate-50/50 p-3 sm:p-4">
+
+            <!-- TAB 1: TEORI -->
+            <section id="content-teori" class="tab-content h-full flex flex-col">
+                <div class="mb-2 shrink-0">
+                    <h3 class="text-base sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <span>💡</span> Kenali 5 Panca Indera Manusia
+                    </h3>
+                    <p class="text-xs sm:text-sm text-slate-600">Klik salah satu indera di bawah ini untuk mempelajari fungsi dan cara merawatnya!</p>
+                </div>
+
+                <!-- Grid Kartu Indera -->
+                <div class="grid grid-cols-5 gap-2 sm:gap-3 shrink-0 mb-3">
+                    <button onclick="showInderaDetail('mata')" id="btn-indera-mata" class="indera-card p-2 sm:p-3 bg-white rounded-2xl border-2 border-sky-300 hover:border-sky-500 shadow-sm transition active:scale-95 flex flex-col items-center text-center">
+                        <span class="text-2xl sm:text-4xl mb-1">👁️</span>
+                        <span class="font-black text-xs sm:text-sm text-slate-700">Mata</span>
+                        <span class="text-[10px] text-sky-600 font-bold hidden sm:block">Penglihatan</span>
+                    </button>
+                    <button onclick="showInderaDetail('telinga')" id="btn-indera-telinga" class="indera-card p-2 sm:p-3 bg-white rounded-2xl border-2 border-slate-200 hover:border-sky-500 shadow-sm transition active:scale-95 flex flex-col items-center text-center">
+                        <span class="text-2xl sm:text-4xl mb-1">👂</span>
+                        <span class="font-black text-xs sm:text-sm text-slate-700">Telinga</span>
+                        <span class="text-[10px] text-sky-600 font-bold hidden sm:block">Pendengaran</span>
+                    </button>
+                    <button onclick="showInderaDetail('hidung')" id="btn-indera-hidung" class="indera-card p-2 sm:p-3 bg-white rounded-2xl border-2 border-slate-200 hover:border-sky-500 shadow-sm transition active:scale-95 flex flex-col items-center text-center">
+                        <span class="text-2xl sm:text-4xl mb-1">👃</span>
+                        <span class="font-black text-xs sm:text-sm text-slate-700">Hidung</span>
+                        <span class="text-[10px] text-sky-600 font-bold hidden sm:block">Penciuman</span>
+                    </button>
+                    <button onclick="showInderaDetail('lidah')" id="btn-indera-lidah" class="indera-card p-2 sm:p-3 bg-white rounded-2xl border-2 border-slate-200 hover:border-sky-500 shadow-sm transition active:scale-95 flex flex-col items-center text-center">
+                        <span class="text-2xl sm:text-4xl mb-1">👅</span>
+                        <span class="font-black text-xs sm:text-sm text-slate-700">Lidah</span>
+                        <span class="text-[10px] text-sky-600 font-bold hidden sm:block">Pengecap</span>
+                    </button>
+                    <button onclick="showInderaDetail('kulit')" id="btn-indera-kulit" class="indera-card p-2 sm:p-3 bg-white rounded-2xl border-2 border-slate-200 hover:border-sky-500 shadow-sm transition active:scale-95 flex flex-col items-center text-center">
+                        <span class="text-2xl sm:text-4xl mb-1">✋</span>
+                        <span class="font-black text-xs sm:text-sm text-slate-700">Kulit</span>
+                        <span class="text-[10px] text-sky-600 font-bold hidden sm:block">Peraba</span>
+                    </button>
+                </div>
+
+                <!-- Panel Detail Informasi Teori -->
+                <div id="teori-detail-box" class="flex-1 bg-white rounded-2xl p-4 border border-slate-200 shadow-inner overflow-y-auto custom-scroll flex flex-col sm:flex-row gap-4 items-start">
+                    <!-- Isinya diisi dinamis via JS -->
+                </div>
+            </section>
+
+            <!-- TAB 2: PROSEDUR -->
+            <section id="content-prosedur" class="tab-content hidden h-full flex flex-col">
+                <div class="mb-3 shrink-0">
+                    <h3 class="text-base sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <span>📋</span> Panduan Eksperimen Virtual
+                    </h3>
+                    <p class="text-xs sm:text-sm text-slate-600">Ikuti langkah-langkah mudah ini untuk melakukan simulasi di Lab Maya!</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 flex-1 overflow-y-auto custom-scroll p-1">
+                    <div class="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-200 p-4 rounded-2xl flex flex-col items-center text-center shadow-sm">
+                        <div class="w-12 h-12 bg-amber-500 text-white font-black text-xl rounded-full flex items-center justify-center mb-2 shadow">1</div>
+                        <h4 class="font-black text-amber-900 text-base mb-1">Pilih Rangsangan</h4>
+                        <span class="text-4xl my-2">📦</span>
+                        <p class="text-xs sm:text-sm text-amber-800 leading-relaxed">
+                            Di menu **Simulasi**, pilih salah satu kotak benda atau rangsangan di sebelah kiri (seperti musik, es batu, parfum, dll).
+                        </p>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 p-4 rounded-2xl flex flex-col items-center text-center shadow-sm">
+                        <div class="w-12 h-12 bg-blue-500 text-white font-black text-xl rounded-full flex items-center justify-center mb-2 shadow">2</div>
+                        <h4 class="font-black text-blue-900 text-base mb-1">Uji ke Panca Indera</h4>
+                        <span class="text-4xl my-2">🎯</span>
+                        <p class="text-xs sm:text-sm text-blue-800 leading-relaxed">
+                            Pilih organ Panca Indera yang menurutmu tepat untuk mendeteksi rangsangan tersebut, lalu klik tombol **"Uji Rangsangan"**.
+                        </p>
+                    </div>
+
+                    <div class="bg-gradient-to-br from-emerald-50 to-green-50 border-2 border-emerald-200 p-4 rounded-2xl flex flex-col items-center text-center shadow-sm">
+                        <div class="w-12 h-12 bg-emerald-500 text-white font-black text-xl rounded-full flex items-center justify-center mb-2 shadow">3</div>
+                        <h4 class="font-black text-emerald-900 text-base mb-1">Amati & Selesaikan LKPD</h4>
+                        <span class="text-4xl my-2">⭐</span>
+                        <p class="text-xs sm:text-sm text-emerald-800 leading-relaxed">
+                            Perhatikan respon balik dari organ tubuh. Setelah paham, buka tab **LKPD** untuk menguji pemahamanmu dan raih bintang!
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: SIMULASI INTERAKTIF -->
+            <section id="content-simulasi" class="tab-content hidden h-full flex flex-col">
+                <div class="flex items-center justify-between mb-2 shrink-0">
+                    <div>
+                        <h3 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-1.5">
+                            <span>🎮</span> Eksperimen Sensory Matching
+                        </h3>
+                        <p class="text-xs text-slate-600 hidden sm:block">Cocokkan rangsangan benda dengan organ panca indera yang sesuai!</p>
+                    </div>
+                    <button onclick="resetSimulasi()" class="px-3 py-1.5 bg-rose-100 hover:bg-rose-200 text-rose-700 border border-rose-300 rounded-xl font-bold text-xs flex items-center gap-1 active:scale-95 transition">
+                        <span>🔄</span> Reset Simulasi
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-12 gap-3 flex-1 overflow-hidden">
+                    
+                    <!-- Kolom 1: Pilihan Rangsangan/Benda (4 Cols) -->
+                    <div class="md:col-span-4 bg-white p-3 rounded-2xl border border-slate-200 flex flex-col shadow-sm">
+                        <span class="text-xs font-black text-slate-500 uppercase tracking-wider mb-2">1. Pilih Rangsangan:</span>
+                        <div id="stimulus-list" class="grid grid-cols-2 gap-2 flex-1 overflow-y-auto custom-scroll pr-1">
+                            <!-- Diisi via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Kolom 2: Pilihan Organ Indera (4 Cols) -->
+                    <div class="md:col-span-4 bg-white p-3 rounded-2xl border border-slate-200 flex flex-col shadow-sm">
+                        <span class="text-xs font-black text-slate-500 uppercase tracking-wider mb-2">2. Pilih Organ Tujuan:</span>
+                        <div id="organ-list" class="grid grid-cols-1 gap-2 flex-1 overflow-y-auto custom-scroll pr-1">
+                            <!-- Diisi via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Kolom 3: Area Pengujian & Reaksi (4 Cols) -->
+                    <div class="md:col-span-4 bg-gradient-to-br from-slate-800 to-slate-900 text-white p-4 rounded-2xl flex flex-col items-center justify-between shadow-md text-center relative overflow-hidden">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">3. Area Uji Eksperimen</span>
+                        
+                        <div class="my-auto flex flex-col items-center">
+                            <!-- Visual gabungan -->
+                            <div class="flex items-center justify-center space-x-3 my-3">
+                                <div id="display-stimulus" class="w-16 h-16 bg-slate-700/80 rounded-2xl border-2 border-dashed border-slate-500 flex items-center justify-center text-3xl shadow">
+                                    ❓
+                                </div>
+                                <span class="text-2xl text-yellow-400 font-bold">➔</span>
+                                <div id="display-organ" class="w-16 h-16 bg-slate-700/80 rounded-2xl border-2 border-dashed border-slate-500 flex items-center justify-center text-3xl shadow">
+                                    ❓
+                                </div>
+                            </div>
+
+                            <!-- Feedback Text -->
+                            <div id="sim-feedback" class="text-xs sm:text-sm font-medium px-3 py-2 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 min-h-[50px] flex items-center justify-center">
+                                Pilih 1 Benda dan 1 Organ Indera, lalu klik "Uji Rangsangan".
+                            </div>
+                        </div>
+
+                        <button onclick="ujiSimulasi()" id="btn-uji" class="w-full py-3 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-slate-950 font-black rounded-xl shadow-lg transition active:scale-95 text-sm sm:text-base">
+                            🧪 UJI RANGSANGAN
+                        </button>
+                    </div>
+
+                </div>
+            </section>
+
+            <!-- TAB 4: LKPD INTERAKTIF -->
+            <section id="content-lkpd" class="tab-content hidden h-full flex flex-col">
+                <div class="flex items-center justify-between mb-2 shrink-0">
+                    <div>
+                        <h3 class="text-base sm:text-xl font-bold text-slate-800 flex items-center gap-2">
+                            <span>📝</span> Lembar Kerja Peserta Didik (LKPD)
+                        </h3>
+                        <p class="text-xs text-slate-600">Jawab 5 soal di bawah ini untuk menguji pemahaman panca inderamu!</p>
+                    </div>
+                    <div id="score-badge" class="px-3 py-1 bg-yellow-100 border border-yellow-300 rounded-xl font-black text-amber-800 text-xs sm:text-sm flex items-center gap-1">
+                        <span>⭐ Skor:</span> <span id="current-score">0</span> / 100
+                    </div>
+                </div>
+
+                <!-- Soal & Container -->
+                <div class="flex-1 bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between overflow-y-auto custom-scroll">
+                    <div id="quiz-container">
+                        <!-- Konten Kuis Diisi JS -->
+                    </div>
+
+                    <div class="flex justify-between items-center pt-3 border-t border-slate-100 mt-2 shrink-0">
+                        <button onclick="resetLKPD()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-xs flex items-center gap-1 active:scale-95 transition">
+                            🔄 Ulangi LKPD
+                        </button>
+                        <button id="next-quiz-btn" onclick="nextQuestion()" class="px-5 py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-xl font-bold text-xs sm:text-sm shadow-md active:scale-95 transition">
+                            Soal Berikutnya ➔
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: PENGEMBANG -->
+            <section id="content-pengembang" class="tab-content hidden h-full flex flex-col">
+                <div class="bg-white rounded-2xl p-4 sm:p-6 border border-slate-200 shadow-sm flex-1 overflow-y-auto custom-scroll">
+                    <div class="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-slate-100">
+                        <div class="w-24 h-24 sm:w-28 sm:h-28 bg-gradient-to-tr from-sky-400 to-blue-600 rounded-full flex items-center justify-center text-5xl shadow-lg border-4 border-white shrink-0">
+                            👨‍🏫
+                        </div>
+                        <div class="text-center sm:text-left">
+                            <span class="px-2.5 py-1 bg-sky-100 text-sky-700 rounded-lg text-xs font-extrabold uppercase tracking-wide">Tim Pengembang</span>
+                            <h3 class="text-xl sm:text-2xl font-black text-slate-800 mt-1">Guru SD Negeri 6 Mas</h3>
+                            <p class="text-xs sm:text-sm text-slate-600 font-medium">Pengembang Media Pembelajaran Digital & Lab Maya Interaktif</p>
+                            <div class="mt-2 text-xs text-slate-500 space-y-0.5">
+                                <p>📍 **Instansi:** SD Negeri 6 Mas</p>
+                                <p>📚 **Sasaran:** Kurikulum Merdeka - IPAS Kelas 3 SD (Fase B)</p>
+                                <p>🎯 **Materi:** Panca Indera Manusia & his Functions</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                            <h4 class="font-bold text-slate-800 text-sm mb-1 flex items-center gap-1.5">
+                                <span>📱</span> Petunjuk Penggunaan Offline
+                            </h4>
+                            <p class="text-xs text-slate-600 leading-relaxed">
+                                Aplikasi ini bersifat **Standalone Full Offline**. Berkas HTML ini dapat disimpan langsung di smartphone, tablet, maupun komputer kelas tanpa memerlukan koneksi internet.
+                            </p>
+                        </div>
+                        <div class="p-3.5 bg-slate-50 rounded-xl border border-slate-200">
+                            <h4 class="font-bold text-slate-800 text-sm mb-1 flex items-center gap-1.5">
+                                <span>🛠️</span> Spesifikasi Teknis
+                            </h4>
+                            <p class="text-xs text-slate-600 leading-relaxed">
+                                Dibangun murni menggunakan **HTML5, CSS3, JavaScript (ES6)**, serta **Web Audio API Native** tanpa ketergantungan server/CDN luar.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ==================== JAVASCRIPT LOGIC & SOUND SYNTHESIS ==================== -->
+    <script>
+        /* ==================== 1. WEB AUDIO API SOUND SYNTHESIZER ==================== */
+        // Menggunakan Web Audio API Native agar suara bisa disintesis secara offline tanpa mp3 eksternal
+        let audioCtx = null;
+        let isMuted = false;
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (isMuted) return;
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+
+                if (type === 'click') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.05);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } 
+                else if (type === 'correct') {
+                    // Chime Nada Positif
+                    [523.25, 659.25, 783.99].forEach((freq, idx) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + (idx * 0.08));
+                        gain.gain.setValueAtTime(0.2, now + (idx * 0.08));
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + (idx * 0.08) + 0.2);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + (idx * 0.08));
+                        osc.stop(now + (idx * 0.08) + 0.2);
+                    });
+                } 
+                else if (type === 'wrong') {
+                    // Nada Salah Low Pitch
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.linearRampToValueAtTime(110, now + 0.25);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                }
+                else if (type === 'start') {
+                    // Fanfare pembuka
+                    [440, 554.37, 659.25, 880].forEach((freq, idx) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, now + (idx * 0.1));
+                        gain.gain.setValueAtTime(0.25, now + (idx * 0.1));
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + (idx * 0.1) + 0.3);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + (idx * 0.1));
+                        osc.stop(now + (idx * 0.1) + 0.3);
+                    });
+                }
+            } catch (e) {
+                console.log("Audio Error / Policy:", e);
+            }
+        }
+
+        function toggleSound() {
+            isMuted = !isMuted;
+            const icon = document.getElementById('sound-icon');
+            icon.innerText = isMuted ? '🔇' : '🔊';
+            if (!isMuted) playSound('click');
+        }
+
+        /* ==================== 2. SPLASH SCREEN & LOADING ==================== */
+        window.addEventListener('DOMContentLoaded', () => {
+            let progress = 0;
+            const loadingBar = document.getElementById('loading-bar');
+            const loadingText = document.getElementById('loading-text');
+            const startBtn = document.getElementById('start-btn');
+
+            const interval = setInterval(() => {
+                progress += Math.floor(Math.random() * 25) + 10;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(interval);
+                    loadingText.innerText = 'Siap Digunakan!';
+                    startBtn.disabled = false;
+                } else {
+                    loadingText.innerText = `Memuat Media (${progress}%)...`;
+                }
+                loadingBar.style.width = `${progress}%`;
+            }, 120);
+
+            // Inisialisasi Konten Teori Pertama & Simulasi
+            showInderaDetail('mata');
+            renderSimulasi();
+            renderLKPD();
+        });
+
+        function startApp() {
+            initAudio();
+            playSound('start');
+            const splash = document.getElementById('splash-screen');
+            splash.style.transition = 'opacity 0.5s ease';
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.classList.add('hidden');
+            }, 500);
+        }
+
+        /* ==================== 3. NAVIGASI TAB ==================== */
+        function switchTab(tabName) {
+            playSound('click');
+            // Sembunyikan semua tab
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-sky-500', 'text-white', 'shadow-sm');
+                btn.classList.add('bg-slate-100', 'text-slate-600');
+            });
+
+            // Tampilkan tab pilihan
+            document.getElementById(`content-${tabName}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            activeBtn.classList.remove('bg-slate-100', 'text-slate-600');
+            activeBtn.classList.add('bg-sky-500', 'text-white', 'shadow-sm');
+        }
+
+        /* ==================== 4. DATA & LOGIK TAB TEORI ==================== */
+        const dataTeori = {
+            mata: {
+                nama: "Mata (Indera Penglihatan)",
+                icon: "👁️",
+                fungsi: "Melihat warna, bentuk, ukuran, dan pencahayaan di sekitar kita.",
+                bagian: ["Pupil (jalan masuk cahaya)", "Lensa Mata", "Retina"],
+                perawatan: [
+                    "Jangan membaca di tempat yang gelap/remang.",
+                    "Jaga jarak mata saat menonton TV atau HP.",
+                    "Makan makanan bergizi seperti wortel (Vitamin A)."
+                ]
+            },
+            telinga: {
+                nama: "Telinga (Indera Pendengaran)",
+                icon: "👂",
+                fungsi: "Mendengar bermacam-macam suara (pelan, keras, tinggi, rendah).",
+                bagian: ["Daun Telinga", "Gendang Telinga", "Saluran Pendengaran"],
+                perawatan: [
+                    "Hindari mendengar musik terlalu keras menggunakan headset.",
+                    "Bersihkan telinga bagian luar secara teratur.",
+                    "Jangan memasukkan benda keras ke dalam telinga."
+                ]
+            },
+            hidung: {
+                nama: "Hidung (Indera Penciuman)",
+                icon: "👃",
+                fungsi: "Mencium berbagai macam bau (harum, wangi, busuk, menyengat).",
+                bagian: ["Lubang Hidung", "Rambut Hidung (Penyaring)", "Saraf Pembau"],
+                perawatan: [
+                    "Gunakan masker saat berada di lingkungan berdebu.",
+                    "Jangan menusuk hidung dengan benda tajam.",
+                    "Bersihkan hidung saat mandi dengan air bersih."
+                ]
+            },
+            lidah: {
+                nama: "Lidah (Indera Pengecap)",
+                icon: "👅",
+                fungsi: "Merasakan 4 rasa utama: Manis, Asin, Pahit, dan Asam.",
+                bagian: ["Papila (bintik pengecap pada permukaan lidah)"],
+                perawatan: [
+                    "Bersihkan lidah menggunakan pembersih khusus/sikat gigi.",
+                    "Hindari makanan/minuman yang terlalu panas atau dingin.",
+                    "Rutin menyikat gigi dan berkumur."
+                ]
+            },
+            kulit: {
+                nama: "Kulit (Indera Peraba)",
+                icon: "✋",
+                fungsi: "Merasakan tekstur (halus/kasar), suhu (panas/dingin), serta rasa sakit.",
+                bagian: ["Pori-pori", "Lapisan Kulit Luar (Epidermis)", "Ujung Saraf Peraba"],
+                perawatan: [
+                    "Mandi secara teratur 2 kali sehari.",
+                    "Gunakan tabur/pelembab agar kulit tidak kering.",
+                    "Gunakan pakaian bersih dan menyerap keringat."
+                ]
+            }
+        };
+
+        function showInderaDetail(key) {
+            playSound('click');
+            const data = dataTeori[key];
+            
+            // Highlight kartu
+            document.querySelectorAll('.indera-card').forEach(c => {
+                c.classList.remove('border-sky-500', 'bg-sky-50');
+                c.classList.add('border-slate-200');
+            });
+            const activeCard = document.getElementById(`btn-indera-${key}`);
+            activeCard.classList.remove('border-slate-200');
+            activeCard.classList.add('border-sky-500', 'bg-sky-50');
+
+            const container = document.getElementById('teori-detail-box');
+            container.innerHTML = `
+                <div class="flex-1">
+                    <div class="flex items-center gap-3 mb-2">
+                        <span class="text-4xl sm:text-5xl">${data.icon}</span>
+                        <div>
+                            <h4 class="text-base sm:text-lg font-black text-slate-800">${data.nama}</h4>
+                            <p class="text-xs sm:text-sm text-sky-700 font-bold">${data.fungsi}</p>
+                        </div>
+                    </div>
+                    <hr class="my-2 border-slate-100">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 text-xs sm:text-sm">
+                        <div class="bg-sky-50/70 p-3 rounded-xl border border-sky-100">
+                            <span class="font-black text-sky-900 block mb-1">🔍 Bagian / Ciri Utama:</span>
+                            <ul class="list-disc list-inside text-slate-700 space-y-1">
+                                ${data.bagian.map(b => `<li>${b}</li>`).join('')}
+                            </ul>
+                        </div>
+                        <div class="bg-emerald-50/70 p-3 rounded-xl border border-emerald-100">
+                            <span class="font-black text-emerald-900 block mb-1">🛡️ Cara Merawat:</span>
+                            <ul class="list-disc list-inside text-slate-700 space-y-1">
+                                ${data.perawatan.map(p => `<li>${p}</li>`).join('')}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        /* ==================== 5. DATA & LOGIK TAB SIMULASI ==================== */
+        const listStimulus = [
+            { id: 'st1', name: 'Musik Radio', icon: '📻', target: 'telinga', desc: 'Gelombang suara musik' },
+            { id: 'st2', name: 'Bunga Wangi', icon: '🌹', target: 'hidung', desc: 'Aroma wangi Bunga' },
+            { id: 'st3', name: 'Permen Manis', icon: '🍬', target: 'lidah', desc: 'Rasa manis gula' },
+            { id: 'st4', name: 'Es Batu Cold', icon: '🧊', target: 'kulit', desc: 'Suhu dingin membeku' },
+            { id: 'st5', name: 'Pelangi Indah', icon: '🌈', target: 'mata', desc: 'Cahaya warna-warni' }
+        ];
+
+        const listOrgan = [
+            { id: 'mata', name: 'Mata', icon: '👁️' },
+            { id: 'telinga', name: 'Telinga', icon: '👂' },
+            { id: 'hidung', name: 'Hidung', icon: '👃' },
+            { id: 'lidah', name: 'Lidah', icon: '👅' },
+            { id: 'kulit', name: 'Kulit', icon: '✋' }
+        ];
+
+        let selectedStimulus = null;
+        let selectedOrgan = null;
+
+        function renderSimulasi() {
+            const stimListEl = document.getElementById('stimulus-list');
+            const organListEl = document.getElementById('organ-list');
+
+            stimListEl.innerHTML = listStimulus.map(st => `
+                <button onclick="selectStimulus('${st.id}')" id="btn-stim-${st.id}" class="p-2 bg-slate-50 hover:bg-amber-50 border-2 border-slate-200 rounded-xl flex flex-col items-center justify-center transition active:scale-95">
+                    <span class="text-2xl">${st.icon}</span>
+                    <span class="text-[11px] font-bold text-slate-700 mt-1">${st.name}</span>
+                </button>
+            `).join('');
+
+            organListEl.innerHTML = listOrgan.map(og => `
+                <button onclick="selectOrgan('${og.id}')" id="btn-organ-${og.id}" class="p-2 bg-slate-50 hover:bg-sky-50 border-2 border-slate-200 rounded-xl flex items-center space-x-3 transition active:scale-95">
+                    <span class="text-2xl">${og.icon}</span>
+                    <span class="text-xs font-bold text-slate-700">${og.name}</span>
+                </button>
+            `).join('');
+        }
+
+        function selectStimulus(id) {
+            playSound('click');
+            selectedStimulus = listStimulus.find(s => s.id === id);
+            
+            document.querySelectorAll('#stimulus-list button').forEach(b => b.classList.replace('border-amber-400', 'border-slate-200'));
+            document.getElementById(`btn-stim-${id}`).classList.replace('border-slate-200', 'border-amber-400');
+
+            document.getElementById('display-stimulus').innerText = selectedStimulus.icon;
+        }
+
+        function selectOrgan(id) {
+            playSound('click');
+            selectedOrgan = listOrgan.find(o => o.id === id);
+
+            document.querySelectorAll('#organ-list button').forEach(b => b.classList.replace('border-sky-400', 'border-slate-200'));
+            document.getElementById(`btn-organ-${id}`).classList.replace('border-slate-200', 'border-sky-400');
+
+            document.getElementById('display-organ').innerText = selectedOrgan.icon;
+        }
+
+        function ujiSimulasi() {
+            const feedbackEl = document.getElementById('sim-feedback');
+
+            if (!selectedStimulus || !selectedOrgan) {
+                playSound('wrong');
+                feedbackEl.innerHTML = `<span class="text-amber-400 font-bold">⚠️ Pilih 1 benda & 1 organ terlebih dahulu!</span>`;
+                return;
+            }
+
+            if (selectedStimulus.target === selectedOrgan.id) {
+                playSound('correct');
+                feedbackEl.innerHTML = `
+                    <div class="text-emerald-400 font-bold">
+                        🎉 BENAR SEKALIKAN! <br>
+                        <span class="text-white text-xs font-normal">${selectedStimulus.name} dideteksi menggunakan organ <b>${selectedOrgan.name}</b>.</span>
+                    </div>
+                `;
+            } else {
+                playSound('wrong');
+                feedbackEl.innerHTML = `
+                    <div class="text-rose-400 font-bold">
+                        ❌ KURANG TEPAT! <br>
+                        <span class="text-white text-xs font-normal">${selectedStimulus.name} kurang cocok jika diuji dengan <b>${selectedOrgan.name}</b>. Coba lagi!</span>
+                    </div>
+                `;
+            }
+        }
+
+        function resetSimulasi() {
+            playSound('click');
+            selectedStimulus = null;
+            selectedOrgan = null;
+
+            document.querySelectorAll('#stimulus-list button').forEach(b => b.classList.replace('border-amber-400', 'border-slate-200'));
+            document.querySelectorAll('#organ-list button').forEach(b => b.classList.replace('border-sky-400', 'border-slate-200'));
+
+            document.getElementById('display-stimulus').innerText = '❓';
+            document.getElementById('display-organ').innerText = '❓';
+            document.getElementById('sim-feedback').innerText = 'Pilih 1 Benda dan 1 Organ Indera, lalu klik "Uji Rangsangan".';
+        }
+
+        /* ==================== 6. DATA & LOGIK TAB LKPD ==================== */
+        const questionsLKPD = [
+            {
+                q: "Made mendengarkan musik balaganjur yang dimainkan di pura. Indera yang digunakan Made adalah...",
+                opt: ["Mata", "Telinga", "Hidung", "Lidah"],
+                ans: 1
+            },
+            {
+                q: "Ibu sedang memasak sambal di dapur. Bau harum masakan sampai ke kamar. Organ tubuh untuk mencium bau adalah...",
+                opt: ["Lidah", "Kulit", "Hidung", "Telinga"],
+                ans: 2
+            },
+            {
+                q: "Saat minum es jeruk, Ketut merasakan rasa manis dan asam. Panca indera pengecap rasa adalah...",
+                opt: ["Mata", "Kulit", "Hidung", "Lidah"],
+                ans: 3
+            },
+            {
+                q: "Wayang kulit dapat dipentaskan dengan indah. Kita menikmati keindahan warna dan gerak wayang menggunakan...",
+                opt: ["Mata", "Telinga", "Kulit", "Lidah"],
+                ans: 0
+            },
+            {
+                q: "Ketika menyentuh permukaan batu yang kasar, organ yang merasakan tekstur kasar tersebut adalah...",
+                opt: ["Hidung", "Kulit", "Lidah", "Mata"],
+                ans: 1
+            }
+        ];
+
+        let currentQIndex = 0;
+        let score = 0;
+        let userAnswers = new Array(questionsLKPD.length).fill(null);
+
+        function renderLKPD() {
+            const container = document.getElementById('quiz-container');
+            const q = questionsLKPD[currentQIndex];
+
+            container.innerHTML = `
+                <div>
+                    <span class="text-xs font-black text-sky-600 bg-sky-50 px-2.5 py-1 rounded-lg border border-sky-100">Soal ${currentQIndex + 1} dari ${questionsLKPD.length}</span>
+                    <h4 class="text-sm sm:text-base font-bold text-slate-800 mt-2 mb-4 leading-relaxed">${q.q}</h4>
+                    
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        ${q.opt.map((optText, idx) => {
+                            const isSelected = userAnswers[currentQIndex] === idx;
+                            return `
+                                <button onclick="selectAnswer(${idx})" class="p-3 text-left rounded-xl font-bold text-xs sm:text-sm transition flex items-center space-x-2 border-2 ${isSelected ? 'bg-sky-500 text-white border-sky-500 shadow-sm' : 'bg-slate-50 hover:bg-slate-100 border-slate-200 text-slate-700'}">
+                                    <span class="w-6 h-6 rounded-full flex items-center justify-center text-xs ${isSelected ? 'bg-white text-sky-600' : 'bg-slate-200 text-slate-600'}">${String.fromCharCode(65 + idx)}</span>
+                                    <span>${optText}</span>
+                                </button>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('next-quiz-btn').innerText = (currentQIndex === questionsLKPD.length - 1) ? 'Selesai & Lihat Nilai 🏆' : 'Soal Berikutnya ➔';
+        }
+
+        function selectAnswer(ansIdx) {
+            playSound('click');
+            userAnswers[currentQIndex] = ansIdx;
+            renderLKPD();
+        }
+
+        function nextQuestion() {
+            if (userAnswers[currentQIndex] === null) {
+                playSound('wrong');
+                alert("Silakan pilih jawabanmu terlebih dahulu ya!");
+                return;
+            }
+
+            if (currentQIndex < questionsLKPD.length - 1) {
+                currentQIndex++;
+                renderLKPD();
+            } else {
+                // Kalkulasi Nilai Akhir
+                score = 0;
+                userAnswers.forEach((ans, idx) => {
+                    if (ans === questionsLKPD[idx].ans) score += 20;
+                });
+
+                document.getElementById('current-score').innerText = score;
+
+                if (score >= 80) playSound('correct');
+                else playSound('wrong');
+
+                const container = document.getElementById('quiz-container');
+                container.innerHTML = `
+                    <div class="text-center py-6">
+                        <span class="text-6xl mb-2 block animate-bounce-gentle">${score >= 80 ? '🌟' : '👍'}</span>
+                        <h4 class="text-xl font-black text-slate-800">LKPD Selesai!</h4>
+                        <p class="text-sm text-slate-600 mt-1">Nilai Kamu: <b class="text-sky-600 text-lg">${score} / 100</b></p>
+                        <p class="text-xs text-slate-500 mt-2">${score >= 80 ? 'Hebat sekali! Kamu sudah sangat memahami fungsi Panca Indera!' : 'Bagus! Pelajari lagi materi Teori dan tingkatkan nilaimu!'}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function resetLKPD() {
+            playSound('click');
+            currentQIndex = 0;
+            score = 0;
+            userAnswers = new Array(questionsLKPD.length).fill(null);
+            document.getElementById('current-score').innerText = '0';
+            renderLKPD();
+        }
+    </script>
+</body>
+</html>
